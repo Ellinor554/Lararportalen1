@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lärarportalen</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════
+   DESIGN TOKENS
+   ════════════════════════════════════════ */
+:root {
+  --bg:           #eae6de;
+  --bg-grain:     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  --sidebar:      #dedad1;
+  --sidebar-w:    160px;
+  --white:        #ffffff;
+  --gold:         #b5967a;
+  --gold-dk:      #8f6e52;
+  --text:         #2e2b26;
+  --text-mid:     #7a7165;
+  --text-faint:   #aaa49b;
+  --border-solid: #d8d3ca;
+  --shadow-card:  0 2px 12px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+  --shadow-raise: 0 6px 24px rgba(0,0,0,0.11), 0 0 0 1px rgba(0,0,0,0.05);
+  --shadow-modal: 0 20px 60px rgba(0,0,0,0.18);
+  --green:        #6a8f6a;
+  --green-pale:   #eef3eb;
+  --blue:         #5a7a9f;
+  --blue-pale:    #eaf0f7;
+  --amber:        #b5967a;
+  --amber-pale:   #f5ede4;
+  --rose:         #9f6a6a;
+  --rose-pale:    #f5eaea;
+  --teal:         #5a9090;
+  --teal-pale:    #e6f2f2;
+  --purple:       #7a6a9f;
+  --purple-pale:  #eeebf7;
+  --radius:       14px;
+  --radius-sm:    9px;
+  --radius-pill:  999px;
+  --serif:        'Playfair Display', Georgia, serif;
+  --sans:         'Inter', system-ui, sans-serif;
+  --transition:   0.22s ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--sans);
+  background-color: var(--bg);
+  background-image: var(--bg-grain);
+  min-height: 100vh;
+  display: flex;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ════════════════════════════════════════
+   APP SHELL
+   ════════════════════════════════════════ */
+#app { display: flex; width: 100%; min-height: 100vh; }
+
+/* ════════════════════════════════════════
+   SIDEBAR
+   ════════════════════════════════════════ */
+#sidebar {
+  width: var(--sidebar-w);
+  background: var(--sidebar);
+  border-right: 1px solid var(--border-solid);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 28px 0 24px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 10;
+  overflow-y: auto;
+}
+
+/* Monogram */
+.sidebar-monogram {
+  display: flex;
+  justify-content: center;
+  padding: 0 20px 18px;
+  border-bottom: 1px solid var(--border-solid);
+  margin-bottom: 10px;
+}
+
+.sidebar-logo-circle {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.5rem;
+  color: var(--gold);
+  letter-spacing: 0.02em;
+  user-select: none;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold);
+  background: rgba(255,255,255,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Section label above nav items */
+.sidebar-section-label {
+  font-family: var(--sans);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: 10px 20px 6px;
+}
+
+/* Nav item */
+.sidebar-cat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.88rem;
+  color: var(--text-mid);
+  cursor: pointer;
+  user-select: none;
+  border-left: 2px solid transparent;
+  transition: color var(--transition), background var(--transition), border-color var(--transition);
+  position: relative;
+}
+.sidebar-cat:hover {
+  color: var(--text);
+  background: rgba(0,0,0,0.035);
+}
+.sidebar-cat.active {
+  color: var(--gold-dk);
+  font-weight: 600;
+  border-left-color: var(--gold);
+  background: rgba(181,150,122,0.09);
+}
+
+/* Active dot indicator */
+.sidebar-cat .cat-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  flex-shrink: 0;
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity 0.18s, transform 0.18s;
+}
+.sidebar-cat.active .cat-dot {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Count badge next to label — removed */
+
+.sidebar-rule {
+  height: 1px;
+  background: var(--border-solid);
+  margin: 10px 20px;
+}
+
+/* Settings at bottom */
+.sidebar-settings {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  color: var(--text-faint);
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  transition: color var(--transition), background var(--transition);
+  border-left: 2px solid transparent;
+}
+.sidebar-settings:hover { color: var(--text-mid); background: rgba(0,0,0,0.035); }
+
+/* ════════════════════════════════════════
+   MAIN
+   ════════════════════════════════════════ */
+#main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 36px 48px;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+/* ════════════════════════════════════════
+   TOP HEADER
+   ════════════════════════════════════════ */
+#topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-bottom: 20px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--border-solid);
+  flex-shrink: 0;
+}
+.site-title {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 2.6rem;
+  font-weight: 400;
+  color: var(--gold);
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.site-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-top: 6px;
+  font-weight: 400;
+}
+/* Active filter indicator shown in topbar */
+#filter-badge {
+  display: none;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.75rem;
+  color: var(--gold-dk);
+  background: rgba(181,150,122,0.12);
+  border: 1px solid rgba(181,150,122,0.3);
+  border-radius: var(--radius-pill);
+  padding: 4px 12px 4px 10px;
+  font-family: var(--serif);
+  font-style: italic;
+  cursor: pointer;
+  transition: background var(--transition);
+  white-space: nowrap;
+}
+#filter-badge:hover { background: rgba(181,150,122,0.2); }
+#filter-badge.visible { display: inline-flex; }
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 4px;
+}
+
+/* ════════════════════════════════════════
+   PILL BUTTONS
+   ════════════════════════════════════════ */
+.btn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.18s, box-shadow 0.18s, transform 0.12s;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.btn-pill:hover { opacity: 0.88; transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+.btn-pill:active { transform: translateY(0); }
+.btn-pill-solid { background: var(--green); color: #fff; border-color: transparent; }
+.btn-icon { font-style: normal; font-size: 0.85rem; line-height: 1; flex-shrink: 0; }
+
+/* ════════════════════════════════════════
+   BOARD
+   ════════════════════════════════════════ */
+#board {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  min-width: max-content;
+  transition: opacity 0.18s ease;
+}
+
+/* Board fade for filter transitions */
+#board.fading { opacity: 0; pointer-events: none; }
+
+/* ════════════════════════════════════════
+   COLUMN
+   ════════════════════════════════════════ */
+.col {
+  width: 230px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.col.hidden {
+  display: none;
+}
+
+.col-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 2px 10px;
+  border-bottom: 2px solid var(--border-solid);
+}
+.col-title {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: var(--text);
+}
+.col-count {
+  font-family: var(--sans);
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-faint);
+  background: rgba(0,0,0,0.055);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+}
+
+.col-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 48px;
+}
+
+/* ════════════════════════════════════════
+   EMPTY STATE (per column)
+   ════════════════════════════════════════ */
+.col-empty {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 28px 16px;
+  border: 1.5px dashed var(--border-solid);
+  border-radius: var(--radius);
+  gap: 8px;
+}
+.col-empty.visible { display: flex; }
+.col-empty-icon {
+  font-size: 1.4rem;
+  opacity: 0.35;
+}
+.col-empty p {
+  font-size: 0.76rem;
+  color: var(--text-faint);
+  line-height: 1.5;
+  max-width: 170px;
+}
+
+/* ════════════════════════════════════════
+   GLOBAL EMPTY STATE (shown when filter
+   matches a section with zero cards total)
+   ════════════════════════════════════════ */
+#global-empty {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 40px;
+  gap: 14px;
+  flex: 1;
+  animation: fadeIn 0.3s ease;
+}
+#global-empty.visible { display: flex; }
+#global-empty .ge-icon {
+  font-size: 2.2rem;
+  opacity: 0.3;
+}
+#global-empty h3 {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.2rem;
+  color: var(--text-mid);
+}
+#global-empty p {
+  font-size: 0.82rem;
+  color: var(--text-faint);
+  line-height: 1.6;
+  max-width: 320px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ════════════════════════════════════════
+   APP CARD
+   ════════════════════════════════════════ */
+.app-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 16px 16px 14px;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow var(--transition), transform var(--transition), opacity 0.2s ease;
+  cursor: default;
+  animation: cardIn 0.25s ease both;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.app-card:hover { box-shadow: var(--shadow-raise); transform: translateY(-3px); }
+.app-card:hover .card-delete { opacity: 1; }
+
+.app-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.app-card.stripe-green::before  { background: var(--green); }
+.app-card.stripe-blue::before   { background: var(--blue); }
+.app-card.stripe-amber::before  { background: var(--amber); }
+.app-card.stripe-rose::before   { background: var(--rose); }
+.app-card.stripe-teal::before   { background: var(--teal); }
+.app-card.stripe-purple::before { background: var(--purple); }
+
+.app-card.stripe-green  { background: linear-gradient(160deg, var(--green-pale) 0%, #fff 60%); }
+.app-card.stripe-blue   { background: linear-gradient(160deg, var(--blue-pale)  0%, #fff 60%); }
+.app-card.stripe-amber  { background: linear-gradient(160deg, var(--amber-pale) 0%, #fff 60%); }
+.app-card.stripe-rose   { background: linear-gradient(160deg, var(--rose-pale)  0%, #fff 60%); }
+.app-card.stripe-teal   { background: linear-gradient(160deg, var(--teal-pale)  0%, #fff 60%); }
+.app-card.stripe-purple { background: linear-gradient(160deg, var(--purple-pale)0%, #fff 60%); }
+
+.card-category {
+  font-size: 0.67rem;
+  font-weight: 500;
+  color: var(--text-faint);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  margin-top: 2px;
+}
+.card-title {
+  font-family: var(--serif);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+  margin-bottom: 5px;
+}
+.card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+.card-title-row .card-title {
+  margin-bottom: 0;
+}
+.card-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.72);
+  border: 1px solid rgba(0,0,0,0.06);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.card-desc {
+  font-size: 0.76rem;
+  color: var(--text-mid);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+.btn-launch {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--sans);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--gold-dk);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  letter-spacing: 0.02em;
+  transition: gap 0.15s, color 0.15s;
+  text-decoration: none;
+}
+.btn-launch::after { content: '→'; }
+.btn-launch:hover { gap: 8px; color: var(--gold); }
+
+.card-html-badge {
+  display: inline-block;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  background: var(--green-pale);
+  color: var(--green);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 4px;
+  vertical-align: middle;
+  text-transform: uppercase;
+}
+.card-delete {
+  position: absolute;
+  top: 9px; right: 9px;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid var(--border-solid);
+  border-radius: 50%;
+  width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--text-faint);
+  font-size: 0.65rem;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+  z-index: 2;
+}
+.card-delete:hover { color: var(--rose); background: var(--rose-pale); border-color: var(--rose); }
+.card-edit {
+  position: absolute;
+  top: 9px; right: 33px;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid var(--border-solid);
+  border-radius: 50%;
+  width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--text-faint);
+  font-size: 0.65rem;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+  z-index: 2;
+}
+.card-edit:hover { color: var(--blue); background: var(--blue-pale); border-color: var(--blue); }
+.app-card:hover .card-edit { opacity: 1; }
+
+/* ════════════════════════════════════════
+   MODALS
+   ════════════════════════════════════════ */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(30,27,22,0.45);
+  backdrop-filter: blur(3px);
+  z-index: 300;
+  align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+
+.modal-box {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-modal);
+  padding: 40px 44px;
+  width: 520px;
+  max-width: 100%;
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-box h2 {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.7rem;
+  font-weight: 400;
+  color: var(--gold);
+  margin-bottom: 4px;
+  line-height: 1.1;
+}
+.modal-subtitle { font-size: 0.8rem; color: var(--text-faint); margin-bottom: 6px; }
+.modal-divider { height: 1px; background: var(--border-solid); margin: 18px 0 4px; }
+.modal-close {
+  position: absolute; top: 16px; right: 18px;
+  background: none; border: none; cursor: pointer;
+  font-size: 1.1rem; color: var(--text-faint);
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: color 0.15s, background 0.15s;
+}
+.modal-close:hover { color: var(--text); background: rgba(0,0,0,0.06); }
+
+/* ════════════════════════════════════════
+   FORM
+   ════════════════════════════════════════ */
+.form-group { margin-top: 16px; }
+.form-group label {
+  display: block;
+  font-size: 0.71rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  color: var(--text-mid);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 9px 13px;
+  border: 1px solid var(--border-solid);
+  border-radius: var(--radius-sm);
+  font-family: var(--sans);
+  font-size: 0.87rem;
+  color: var(--text);
+  background: #fdfcf9;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  resize: vertical;
+  line-height: 1.5;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(181,150,122,0.12);
+}
+#new-html {
+  font-family: 'Courier New', monospace;
+  font-size: 0.76rem;
+  min-height: 130px;
+  background: #f7f5f0;
+}
+
+.color-picker { display: flex; gap: 9px; padding: 4px 0; }
+.cp-dot {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid transparent;
+  outline: 2px solid transparent;
+  transition: transform 0.14s, outline-color 0.14s;
+  flex-shrink: 0;
+}
+.cp-dot.selected { transform: scale(1.18); outline-color: var(--text); outline-offset: 1px; }
+.dot-green  { background: var(--green); }
+.dot-blue   { background: var(--blue); }
+.dot-amber  { background: var(--amber); }
+.dot-rose   { background: var(--rose); }
+.dot-teal   { background: var(--teal); }
+.dot-purple { background: var(--purple); }
+
+.btn-cancel {
+  background: transparent;
+  border: 1px solid var(--border-solid);
+  border-radius: var(--radius-pill);
+  padding: 7px 16px;
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-mid);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-cancel:hover { background: rgba(0,0,0,0.04); }
+
+.btn-export, .btn-import {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.12s;
+  margin-top: 14px;
+}
+.btn-export { background: var(--green); color: #fff; border: none; }
+.btn-import { background: transparent; color: var(--text-mid); border: 1px solid var(--border-solid); }
+.btn-export:hover, .btn-import:hover { opacity: 0.84; transform: translateY(-1px); }
+#import-file-input { display: none; }
+
+/* ════════════════════════════════════════
+   RESPONSIVE
+   ════════════════════════════════════════ */
+@media (max-width: 800px) {
+  :root { --sidebar-w: 130px; }
+  #main { padding: 20px 16px 36px; }
+  .site-title { font-size: 1.9rem; }
+  .col { width: 190px; }
+  .modal-box { padding: 28px 22px; }
+}
+</style>
+</head>
+<body>
+
+<!-- APP SHELL -->
+<div id="app">
+
+  <!-- ════════════ SIDEBAR ════════════ -->
+  <nav id="sidebar">
+    <div class="sidebar-monogram"><span class="sidebar-logo-circle">L</span></div>
+
+    <div class="sidebar-section-label">Filter</div>
+
+    <!-- "Visa alla" -->
+    <div class="sidebar-cat active" data-filter="all" onclick="applyFilter('all', this)">
+      <span class="cat-dot"></span>
+      <span class="cat-label">Visa alla</span>
+    </div>
+
+    <div class="sidebar-rule"></div>
+    <div class="sidebar-section-label">Ämnen</div>
+
+    <div class="sidebar-cat" data-filter="svenska" onclick="applyFilter('svenska', this)">
+      <span class="cat-dot"></span>
+      <span class="cat-label">Svenska</span>
+    </div>
+    <div class="sidebar-cat" data-filter="matte" onclick="applyFilter('matte', this)">
+      <span class="cat-dot"></span>
+      <span class="cat-label">Matte</span>
+    </div>
+    <div class="sidebar-cat" data-filter="engelska" onclick="applyFilter('engelska', this)">
+      <span class="cat-dot"></span>
+      <span class="cat-label">Engelska</span>
+    </div>
+    <div class="sidebar-cat" data-filter="natur" onclick="applyFilter('natur', this)">
+      <span class="cat-dot"></span>
+      <span class="cat-label">Naturvetenskap</span>
+    </div>
+
+    <!-- custom sections injected here by JS -->
+    <div id="sidebar-custom-slot"></div>
+
+    <!-- Settings -->
+    <button class="sidebar-settings auth-only" onclick="openSettings()" style="display:none;">
+      <span style="font-size:0.85rem;">⚙</span> Inställningar
+    </button>
+  </nav>
+
+  <!-- ════════════ MAIN ════════════ -->
+  <main id="main">
+
+    <div id="topbar">
+      <div>
+        <div class="site-title">Lärarportalen</div>
+        <div class="site-subtitle">Mina verktyg</div>
+      </div>
+      <div class="header-actions">
+        <!-- Active filter badge — click to clear -->
+        <span id="filter-badge" onclick="applyFilter('all', document.querySelector('[data-filter=all]'))">
+          <span id="filter-badge-label">Svenska</span>
+          <span style="font-size:0.7rem; opacity:0.6;">✕</span>
+        </span>
+        <button class="btn-pill btn-pill-solid auth-only" onclick="openAddApp()" style="display:none;">
+          <span class="btn-icon">+</span> Lägg till app
+        </button>
+      </div>
+    </div>
+
+    <!-- Board (kanban columns) -->
+    <div id="board">
+
+      <!-- SVENSKA -->
+      <div class="col" id="col-svenska" data-section="svenska">
+        <div class="col-header">
+          <span class="col-title">Svenska</span>
+          <span class="col-count" id="count-svenska">0</span>
+        </div>
+        <div class="col-cards" id="grid-svenska"></div>
+        <div class="col-empty visible" id="empty-svenska">
+          <div class="col-empty-icon">📂</div>
+          <p>Inga verktyg tillagda i denna kategori än.</p>
+        </div>
+      </div>
+
+      <!-- MATTE -->
+      <div class="col" id="col-matte" data-section="matte">
+        <div class="col-header">
+          <span class="col-title">Matte</span>
+          <span class="col-count" id="count-matte">0</span>
+        </div>
+        <div class="col-cards" id="grid-matte"></div>
+        <div class="col-empty visible" id="empty-matte">
+          <div class="col-empty-icon">📂</div>
+          <p>Inga verktyg tillagda i denna kategori än.</p>
+        </div>
+      </div>
+
+      <!-- ENGELSKA -->
+      <div class="col" id="col-engelska" data-section="engelska">
+        <div class="col-header">
+          <span class="col-title">Engelska</span>
+          <span class="col-count" id="count-engelska">0</span>
+        </div>
+        <div class="col-cards" id="grid-engelska"></div>
+        <div class="col-empty visible" id="empty-engelska">
+          <div class="col-empty-icon">📂</div>
+          <p>Inga verktyg tillagda i denna kategori än.</p>
+        </div>
+      </div>
+
+      <!-- NATURVETENSKAP -->
+      <div class="col" id="col-natur" data-section="natur">
+        <div class="col-header">
+          <span class="col-title">Naturvetenskap</span>
+          <span class="col-count" id="count-natur">0</span>
+        </div>
+        <div class="col-cards" id="grid-natur"></div>
+        <div class="col-empty visible" id="empty-natur">
+          <div class="col-empty-icon">📂</div>
+          <p>Inga verktyg tillagda i denna kategori än.</p>
+        </div>
+      </div>
+
+    </div><!-- /board -->
+
+    <!-- Global empty state -->
+    <div id="global-empty">
+      <div class="ge-icon">🗂</div>
+      <h3 id="global-empty-title">Inga verktyg här än</h3>
+      <p id="global-empty-text">Inga verktyg tillagda i denna kategori än. Klicka på "+ Lägg till app" för att komma igång.</p>
+    </div>
+
+  </main>
+</div><!-- /app -->
+
+
+<!-- ════════════════════════════════════════
+     ADD APP MODAL
+     ════════════════════════════════════════ -->
+<div id="addapp-modal" class="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeAddApp()">✕</button>
+    <h2 id="addapp-title">Lägg till app</h2>
+    <p class="modal-subtitle" id="addapp-subtitle">Fyll i uppgifterna och klistra in HTML-koden nedan.</p>
+    <div class="modal-divider"></div>
+
+    <div class="form-group">
+      <label>Appens namn *</label>
+      <input type="text" id="new-title" placeholder="t.ex. Mattespelet">
+    </div>
+    <div class="form-group">
+      <label>Ikon</label>
+      <input type="text" id="new-icon" placeholder="t.ex. 📚">
+    </div>
+    <div class="form-group">
+      <label>Kategori / typ</label>
+      <input type="text" id="new-category" placeholder="t.ex. Algebra · Spel">
+    </div>
+    <div class="form-group">
+      <label>Beskrivning</label>
+      <input type="text" id="new-desc" placeholder="Kort beskrivning av verktyget">
+    </div>
+    <div class="form-group">
+      <label>Sektion</label>
+      <select id="new-section">
+        <option value="svenska">Svenska</option>
+        <option value="matte">Matte</option>
+        <option value="engelska">Engelska</option>
+        <option value="natur">Naturvetenskap</option>
+        <option value="ny">+ Ny sektion…</option>
+      </select>
+    </div>
+    <div class="form-group" id="new-section-name-wrap" style="display:none;">
+      <label>Ny sektionens namn</label>
+      <input type="text" id="new-section-name" placeholder="t.ex. Historia">
+    </div>
+    <div class="form-group">
+      <label>Accentfärg</label>
+      <div class="color-picker">
+        <span class="cp-dot dot-green selected" data-color="green"  onclick="pickColor(this)"></span>
+        <span class="cp-dot dot-blue"           data-color="blue"   onclick="pickColor(this)"></span>
+        <span class="cp-dot dot-amber"          data-color="amber"  onclick="pickColor(this)"></span>
+        <span class="cp-dot dot-rose"           data-color="rose"   onclick="pickColor(this)"></span>
+        <span class="cp-dot dot-teal"           data-color="teal"   onclick="pickColor(this)"></span>
+        <span class="cp-dot dot-purple"         data-color="purple" onclick="pickColor(this)"></span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>HTML-källkod (klistra in hela din .html-fil)</label>
+      <textarea id="new-html" placeholder="&lt;!DOCTYPE html&gt;&#10;&lt;html&gt;...&lt;/html&gt;&#10;&#10;Lämna tomt om du anger en URL nedan."></textarea>
+    </div>
+    <div class="form-group">
+      <label>URL (om ingen HTML-kod ovan)</label>
+      <input type="url" id="new-url" placeholder="https://...">
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:26px; justify-content:flex-end; align-items:center;">
+      <button class="btn-cancel" onclick="closeAddApp()">Avbryt</button>
+      <button class="btn-pill btn-pill-solid" id="addapp-submit-btn" onclick="submitAddApp()">Spara app</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════
+     SETTINGS MODAL
+     ════════════════════════════════════════ -->
+<div id="settings-modal" class="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeSettings()">✕</button>
+    <h2>Inställningar</h2>
+    <div class="modal-divider"></div>
+
+    <!-- Export / Import -->
+    <p style="color:var(--text-mid); font-size:0.86rem; line-height:1.65; margin-top:14px;">
+      Exportera dina sparade appar som en JSON-fil för säkerhetskopiering eller flytt till en annan dator.
+    </p>
+    <button class="btn-export" onclick="exportData()">↓ Exportera appar (JSON)</button>
+    <div style="margin-top:0;">
+      <button class="btn-import" onclick="document.getElementById('import-file-input').click()">↑ Importera appar (JSON)</button>
+      <input type="file" id="import-file-input" accept=".json" onchange="importData(event)">
+    </div>
+
+    <!-- Manage subjects -->
+    <div class="modal-divider" style="margin-top:28px;"></div>
+    <p style="font-size:0.71rem; font-weight:600; letter-spacing:0.09em; color:var(--text-mid); text-transform:uppercase; margin-top:18px;">Hantera ämnen</p>
+    <p style="color:var(--text-mid); font-size:0.82rem; line-height:1.6; margin-top:6px; margin-bottom:14px;">
+      Inbyggda ämnen (Svenska, Matte, Engelska, Naturvetenskap) kan inte tas bort. Egna ämnen och alla verktyg i dem raderas permanent.
+    </p>
+    <div id="settings-category-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+
+    <p style="margin-top:28px; font-size:0.75rem; color:var(--text-faint); letter-spacing:0.04em;">Version 2.4 · Lärarportalen</p>
+  </div>
+</div>
+
+
+<script>
+/* ═══════════════════════════════════════════
+   CONSTANTS & STATE
+   ═══════════════════════════════════════════ */
+var STORAGE_KEY   = 'lararportalen_apps_v2';
+var selectedColor = 'green';
+var editingAppId  = null;
+var authenticated = false;
+var activeFilter  = 'all';   /* current sidebar filter */
+
+/* ─────────────────────────────────────────────
+   PREINSTALLED APPS
+   Paste your hardcoded apps here. These are
+   read-only: no delete button, never saved to
+   localStorage. Format matches the stored app
+   object: { id, title, icon, category, desc,
+   url, html, color, section, sectionName }
+   ───────────────────────────────────────────── */
+const PREINSTALLED_APPS = [];
+
+var GRID_MAP = {
+  svenska:  'grid-svenska',
+  matte:    'grid-matte',
+  engelska: 'grid-engelska',
+  natur:    'grid-natur'
+};
+
+var SECTION_LABELS = {
+  svenska:  'Svenska',
+  matte:    'Matte',
+  engelska: 'Engelska',
+  natur:    'Naturvetenskap'
+};
+
+/* ═══════════════════════════════════════════
+   INITIALISE
+   ═══════════════════════════════════════════ */
+(function () {
+  authenticated = true;
+  document.querySelectorAll('.auth-only').forEach(function (el) {
+    el.style.display = '';
+  });
+  renderStoredApps();
+  updateAllCounts();
+  applyFilter('all', document.querySelector('[data-filter="all"]'));
+})();
+
+/* ═══════════════════════════════════════════
+   FILTER ENGINE
+   ═══════════════════════════════════════════ */
+function applyFilter(section, clickedEl) {
+  activeFilter = section;
+
+  /* Update active state on sidebar items */
+  document.querySelectorAll('.sidebar-cat').forEach(function (el) {
+    el.classList.toggle('active', el === clickedEl);
+  });
+
+  /* Show/hide filter badge in topbar */
+  var badge = document.getElementById('filter-badge');
+  if (section === 'all') {
+    badge.classList.remove('visible');
+  } else {
+    var label = SECTION_LABELS[section] || section.replace('custom_', '');
+    document.getElementById('filter-badge-label').textContent = label;
+    badge.classList.add('visible');
+  }
+
+  var board = document.getElementById('board');
+
+  /* Fade out → update → fade in */
+  board.classList.add('fading');
+
+  setTimeout(function () {
+    var cols = board.querySelectorAll('.col');
+    var anyVisible = false;
+
+    cols.forEach(function (col) {
+      var colSection = col.dataset.section;
+      var show = (section === 'all') || (colSection === section);
+
+      if (show) {
+        col.classList.remove('hidden');
+        anyVisible = true;
+
+        /* Show/hide per-column empty state */
+        var cards = col.querySelectorAll('.app-card');
+        var emptyEl = col.querySelector('.col-empty');
+        if (emptyEl) {
+          emptyEl.classList.toggle('visible', cards.length === 0);
+        }
+      } else {
+        col.classList.add('hidden');
+      }
+    });
+
+    /* Global empty state (only when filtering a single section) */
+    var globalEmpty = document.getElementById('global-empty');
+    if (!anyVisible) {
+      board.style.display = 'none';
+      globalEmpty.classList.add('visible');
+    } else {
+      board.style.display = 'flex';
+      globalEmpty.classList.remove('visible');
+    }
+
+    board.classList.remove('fading');
+  }, 160);
+}
+
+/* ═══════════════════════════════════════════
+   SIDEBAR COUNTS
+   Each sidebar filter item shows total cards in that section
+   ═══════════════════════════════════════════ */
+function updateSidebarCounts() {
+  /* Count badges removed from sidebar — no-op kept for safe call sites */
+}
+
+/* ═══════════════════════════════════════════
+   COLUMN COUNT BADGES (in col header)
+   ═══════════════════════════════════════════ */
+function updateCount(gridId) {
+  var grid  = document.getElementById(gridId);
+  if (!grid) return;
+  var count = grid.querySelectorAll('.app-card').length;
+  var col   = grid.closest('.col');
+  if (!col) return;
+  var badge = col.querySelector('.col-count');
+  if (badge) badge.textContent = count;
+
+  /* Refresh empty state for this column */
+  var emptyEl = col.querySelector('.col-empty');
+  if (emptyEl) {
+    var isFiltered = activeFilter !== 'all' && col.dataset.section !== activeFilter;
+    if (!isFiltered) {
+      emptyEl.classList.toggle('visible', count === 0);
+    }
+  }
+}
+
+function updateAllCounts() {
+  ['grid-svenska','grid-matte','grid-engelska','grid-natur'].forEach(updateCount);
+  document.querySelectorAll('.col-cards[data-section]').forEach(function (g) {
+    updateCount(g.id);
+  });
+  updateSidebarCounts();
+}
+
+/* ═══════════════════════════════════════════
+   localStorage HELPERS
+   ═══════════════════════════════════════════ */
+function loadApps() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch (e) { return []; }
+}
+function saveApps(apps) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(apps));
+}
+
+/* ═══════════════════════════════════════════
+   RENDER ALL APPS ON PAGE LOAD
+   Preinstalled first (read-only), then
+   localStorage apps (editable) on top.
+   ═══════════════════════════════════════════ */
+function renderStoredApps() {
+  PREINSTALLED_APPS.forEach(function (app) { appendCardToDOM(app, false, true); });
+  loadApps().forEach(function (app)        { appendCardToDOM(app, false, false); });
+  updateAllCounts();
+}
+
+/* ═══════════════════════════════════════════
+   BLOB LAUNCH ENGINE
+   ═══════════════════════════════════════════ */
+function launchHtml(htmlString) {
+  var blob = new Blob([htmlString], { type: 'text/html' });
+  var url  = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+  setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+}
+
+function launchUrl(url) {
+  if (!url || url === '#') return;
+  window.open(url, '_blank');
+}
+
+function launchStoredHtml(id) {
+  var app = loadApps().find(function (a) { return a.id === id; });
+  if (app && app.html) launchHtml(app.html);
+}
+
+function findCardById(id) {
+  var cards = document.querySelectorAll('.app-card');
+  for (var i = 0; i < cards.length; i++) {
+    if (cards[i].dataset.id === id) return cards[i];
+  }
+  return null;
+}
+
+/* ═══════════════════════════════════════════
+   BUILD & INSERT A CARD INTO THE DOM
+   isPreinstalled = true  → no delete button
+   isPreinstalled = false → delete button shown
+                           (for auth-only users)
+   persist        = true  → save to localStorage
+   ═══════════════════════════════════════════ */
+function appendCardToDOM(app, persist, isPreinstalled) {
+  var hasHtml = app.html && app.html.trim().length > 0;
+  var color   = app.color || 'green';
+  var icon    = (app.icon || '').trim() || '🌐';
+
+  var card = document.createElement('div');
+  card.className       = 'app-card stripe-' + color;
+  card.dataset.id      = app.id;
+  card.dataset.section = app.section;
+
+  var launchBtn = hasHtml
+    ? '<button class="btn-launch" onclick="launchStoredHtml(\'' + app.id + '\')">Öppna verktyg ' +
+      '<span class="card-html-badge">HTML</span></button>'
+    : '<button class="btn-launch" onclick="launchUrl(\'' + esc(app.url || '#') + '\')">Öppna verktyg </button>';
+
+  /* Delete button only for user-added (non-preinstalled) cards */
+  var cardActions = isPreinstalled
+    ? ''
+    : '<button class="card-edit auth-only" title="Redigera" onclick="openEditApp(\'' + app.id + '\')">✎</button>' +
+      '<button class="card-delete auth-only" title="Ta bort" onclick="deleteCard(this,\'' + app.id + '\')">✕</button>';
+
+  card.innerHTML =
+    cardActions +
+    '<div class="card-category">' + esc(app.category || 'Verktyg') + '</div>' +
+    '<div class="card-title-row"><span class="card-icon">' + esc(icon) + '</span>' +
+      '<div class="card-title">' + esc(app.title) + '</div></div>' +
+    (app.desc ? '<div class="card-desc">' + esc(app.desc) + '</div>' : '') +
+    launchBtn;
+
+  var grid = resolveGrid(app.section, app.sectionName);
+  if (grid) {
+    grid.appendChild(card);
+    updateCount(grid.id);
+  }
+
+  if (persist) {
+    var apps = loadApps();
+    apps.push(app);
+    saveApps(apps);
+    updateSidebarCounts();
+    /* Re-apply filter so new card respects current view */
+    var activeEl = document.querySelector('.sidebar-cat.active');
+    applyFilter(activeFilter, activeEl);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   DELETE CARD
+   ═══════════════════════════════════════════ */
+function deleteCard(btn, id) {
+  if (!confirm('Är du säker på att du vill radera denna app? Detta går inte att ångra.')) return;
+
+  var card   = btn.closest('.app-card');
+  var gridId = card.closest('.col-cards') ? card.closest('.col-cards').id : null;
+
+  card.style.transition = 'opacity 0.2s, transform 0.2s';
+  card.style.opacity    = '0';
+  card.style.transform  = 'scale(0.93)';
+
+  setTimeout(function () {
+    card.remove();
+    if (gridId) updateCount(gridId);
+    updateSidebarCounts();
+    if (id && !id.startsWith('static-')) {
+      saveApps(loadApps().filter(function (a) { return a.id !== id; }));
+    }
+    /* Refresh filter view */
+    var activeEl = document.querySelector('.sidebar-cat.active');
+    applyFilter(activeFilter, activeEl);
+  }, 210);
+}
+
+/* ═══════════════════════════════════════════
+   RESOLVE / CREATE COLUMN + GRID
+   ═══════════════════════════════════════════ */
+function resolveGrid(section, sectionName) {
+  if (GRID_MAP[section]) return document.getElementById(GRID_MAP[section]);
+
+  if (section && section.startsWith('custom_')) {
+    var existingGrid = document.querySelector('.col-cards[data-section="' + section + '"]');
+    if (existingGrid) return existingGrid;
+
+    var board  = document.getElementById('board');
+    var label  = sectionName || section.replace('custom_', '');
+
+    /* Column */
+    var col    = document.createElement('div');
+    col.className       = 'col';
+    col.id              = 'col-' + section;
+    col.dataset.section = section;
+
+    var hdr = document.createElement('div');
+    hdr.className = 'col-header';
+    hdr.innerHTML =
+      '<span class="col-title">' + esc(label) + '</span>' +
+      '<span class="col-count" id="count-' + section + '">0</span>';
+
+    var grid = document.createElement('div');
+    grid.className       = 'col-cards';
+    grid.id              = 'grid-' + section;
+    grid.dataset.section = section;
+
+    var emptyDiv = document.createElement('div');
+    emptyDiv.className = 'col-empty';
+    emptyDiv.id        = 'empty-' + section;
+    emptyDiv.innerHTML = '<div class="col-empty-icon">📂</div><p>Inga verktyg tillagda i denna kategori än.</p>';
+
+    col.appendChild(hdr);
+    col.appendChild(grid);
+    col.appendChild(emptyDiv);
+    board.appendChild(col);
+
+    /* Sidebar entry for custom section */
+    var slot = document.getElementById('sidebar-custom-slot');
+    var catEl = document.createElement('div');
+    catEl.className       = 'sidebar-cat';
+    catEl.dataset.filter  = section;
+    catEl.innerHTML       =
+      '<span class="cat-dot"></span>' +
+      '<span class="cat-label">' + esc(label) + '</span>';
+    catEl.onclick = (function (s, el) {
+      return function () { applyFilter(s, el); };
+    })(section, catEl);
+    slot.appendChild(catEl);
+
+    /* Update SECTION_LABELS so filter badge works */
+    SECTION_LABELS[section] = label;
+
+    /* Register in modal select */
+    var sel = document.getElementById('new-section');
+    if (!sel.querySelector('option[value="' + section + '"]')) {
+      var opt = document.createElement('option');
+      opt.value = section; opt.textContent = label;
+      sel.insertBefore(opt, sel.querySelector('option[value="ny"]'));
+    }
+    return grid;
+  }
+  return document.getElementById('grid-svenska');
+}
+
+/* ═══════════════════════════════════════════
+   ADD APP MODAL
+   ═══════════════════════════════════════════ */
+function setModalEditState(isEdit) {
+  document.getElementById('addapp-title').textContent = isEdit ? 'Redigera app' : 'Lägg till app';
+  document.getElementById('addapp-subtitle').textContent = isEdit
+    ? 'Uppdatera ikon, färg och innehåll för appen.'
+    : 'Fyll i uppgifterna och klistra in HTML-koden nedan.';
+  document.getElementById('addapp-submit-btn').textContent = isEdit ? 'Spara ändringar' : 'Spara app';
+}
+
+function resetAddAppForm() {
+  ['new-title','new-icon','new-category','new-desc','new-url','new-section-name','new-html']
+    .forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('new-section').value = 'svenska';
+  document.getElementById('new-section-name-wrap').style.display = 'none';
+  selectedColor = 'green';
+  document.querySelectorAll('.cp-dot').forEach(function (d) { d.classList.remove('selected'); });
+  document.querySelector('.cp-dot[data-color="green"]').classList.add('selected');
+}
+
+function openAddApp()  {
+  editingAppId = null;
+  setModalEditState(false);
+  resetAddAppForm();
+  document.getElementById('addapp-modal').classList.add('open');
+}
+
+function closeAddApp() {
+  document.getElementById('addapp-modal').classList.remove('open');
+  editingAppId = null;
+  setModalEditState(false);
+  resetAddAppForm();
+}
+
+function pickColor(el) {
+  document.querySelectorAll('.cp-dot').forEach(function (d) { d.classList.remove('selected'); });
+  el.classList.add('selected');
+  selectedColor = el.dataset.color;
+}
+
+document.getElementById('new-section').addEventListener('change', function () {
+  document.getElementById('new-section-name-wrap').style.display =
+    this.value === 'ny' ? '' : 'none';
+});
+
+function openEditApp(id) {
+  var app = loadApps().find(function (a) { return a.id === id; });
+  if (!app) return;
+
+  editingAppId = id;
+  setModalEditState(true);
+  resetAddAppForm();
+
+  document.getElementById('new-title').value = app.title || '';
+  document.getElementById('new-icon').value = app.icon || '';
+  document.getElementById('new-category').value = app.category || '';
+  document.getElementById('new-desc').value = app.desc || '';
+  document.getElementById('new-url').value = app.url || '';
+  document.getElementById('new-html').value = app.html || '';
+
+  var sectionSelect = document.getElementById('new-section');
+  var hasSectionOption = Array.prototype.some.call(sectionSelect.options, function (opt) {
+    return opt.value === app.section;
+  });
+  if (app.section && hasSectionOption) {
+    sectionSelect.value = app.section;
+  }
+
+  selectedColor = app.color || 'green';
+  document.querySelectorAll('.cp-dot').forEach(function (d) {
+    d.classList.toggle('selected', d.dataset.color === selectedColor);
+  });
+
+  document.getElementById('new-section-name-wrap').style.display = 'none';
+  document.getElementById('addapp-modal').classList.add('open');
+}
+
+function submitAddApp() {
+  var title      = document.getElementById('new-title').value.trim();
+  var icon       = document.getElementById('new-icon').value.trim();
+  var category   = document.getElementById('new-category').value.trim();
+  var desc       = document.getElementById('new-desc').value.trim();
+  var url        = document.getElementById('new-url').value.trim();
+  var html       = document.getElementById('new-html').value.trim();
+  var section    = document.getElementById('new-section').value;
+  var newSecName = document.getElementById('new-section-name').value.trim();
+
+  if (!title) { alert('Ange ett namn för appen.'); return; }
+
+  var sectionKey = section;
+  if (section === 'ny') {
+    if (!newSecName) { alert('Ange ett namn för den nya sektionen.'); return; }
+    sectionKey = 'custom_' + newSecName;
+  }
+
+  var appPayload = {
+    id:          editingAppId || ('app_' + Date.now()),
+    title:       title,
+    icon:        icon,
+    category:    category,
+    desc:        desc,
+    url:         url || '#',
+    html:        html,
+    color:       selectedColor,
+    section:     sectionKey,
+    sectionName: (section === 'ny') ? newSecName : null
+  };
+
+  if (editingAppId) {
+    var apps = loadApps();
+    var idx  = apps.findIndex(function (a) { return a.id === editingAppId; });
+    if (idx === -1) { alert('Appen kunde inte hittas.'); return; }
+    apps[idx] = appPayload;
+    saveApps(apps);
+
+    var oldCard = findCardById(editingAppId);
+    if (oldCard) {
+      var oldGrid = oldCard.closest('.col-cards');
+      oldCard.remove();
+      if (oldGrid) updateCount(oldGrid.id);
+    }
+
+    appendCardToDOM(appPayload, false, false);
+    updateSidebarCounts();
+    var activeEl = document.querySelector('.sidebar-cat.active');
+    applyFilter(activeFilter, activeEl);
+  } else {
+    appendCardToDOM(appPayload, true, false);
+  }
+
+  closeAddApp();
+}
+
+document.getElementById('addapp-modal').addEventListener('click', function (e) {
+  if (e.target === this) closeAddApp();
+});
+
+/* ═══════════════════════════════════════════
+   SETTINGS MODAL
+   ═══════════════════════════════════════════ */
+function openSettings() {
+  /* Rebuild the category list every time the modal opens */
+  var list = document.getElementById('settings-category-list');
+  list.innerHTML = '';
+
+  /* Built-in (locked) sections */
+  var builtIn = [
+    { key: 'svenska',  label: 'Svenska' },
+    { key: 'matte',    label: 'Matte' },
+    { key: 'engelska', label: 'Engelska' },
+    { key: 'natur',    label: 'Naturvetenskap' }
+  ];
+
+  builtIn.forEach(function (s) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:9px 13px; border:1px solid var(--border-solid); border-radius:var(--radius-sm); background:#faf9f7;';
+    row.innerHTML =
+      '<span style="font-family:var(--serif); font-style:italic; font-size:0.9rem; color:var(--text);">' + esc(s.label) + '</span>' +
+      '<span style="font-size:0.68rem; font-weight:500; color:var(--text-faint); letter-spacing:0.06em; text-transform:uppercase;">Inbyggt</span>';
+    list.appendChild(row);
+  });
+
+  /* Custom (deletable) sections — find all .col elements with custom_ sections */
+  var customCols = document.querySelectorAll('.col[data-section^="custom_"]');
+  if (customCols.length === 0) {
+    var note = document.createElement('p');
+    note.style.cssText = 'font-size:0.8rem; color:var(--text-faint); margin-top:6px;';
+    note.textContent = 'Inga egna ämnen har skapats än.';
+    list.appendChild(note);
+    return;
+  }
+
+  customCols.forEach(function (col) {
+    var section = col.dataset.section;
+    var label   = SECTION_LABELS[section] || section.replace('custom_', '');
+    var appCount = col.querySelectorAll('.app-card').length;
+
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:9px 13px; border:1px solid var(--border-solid); border-radius:var(--radius-sm); background:#faf9f7;';
+
+    var left = document.createElement('div');
+    left.innerHTML =
+      '<span style="font-family:var(--serif); font-style:italic; font-size:0.9rem; color:var(--text);">' + esc(label) + '</span>' +
+      '<span style="display:block; font-size:0.7rem; color:var(--text-faint); margin-top:1px;">' + appCount + ' verktyg</span>';
+
+    var delBtn = document.createElement('button');
+    delBtn.textContent = 'Ta bort';
+    delBtn.style.cssText = 'background:transparent; border:1px solid var(--rose); border-radius:var(--radius-pill); padding:4px 11px; font-family:var(--sans); font-size:0.73rem; font-weight:500; color:var(--rose); cursor:pointer; transition:background 0.15s, color 0.15s; white-space:nowrap; flex-shrink:0;';
+    delBtn.onmouseenter = function () { delBtn.style.background = 'var(--rose-pale)'; };
+    delBtn.onmouseleave = function () { delBtn.style.background = 'transparent'; };
+    delBtn.onclick = function () { deleteCategory(section, label, appCount); };
+
+    row.appendChild(left);
+    row.appendChild(delBtn);
+    list.appendChild(row);
+  });
+
+  document.getElementById('settings-modal').classList.add('open');
+}
+
+function closeSettings() { document.getElementById('settings-modal').classList.remove('open'); }
+document.getElementById('settings-modal').addEventListener('click', function (e) {
+  if (e.target === this) closeSettings();
+});
+
+/* ═══════════════════════════════════════════
+   DELETE CATEGORY
+   ═══════════════════════════════════════════ */
+function deleteCategory(section, label, appCount) {
+  var msg = 'Ta bort ämnet "' + label + '"?\n\n';
+  if (appCount > 0) {
+    msg += 'Varning: ' + appCount + ' verktyg i detta ämne kommer också att raderas permanent.\n\n';
+  }
+  msg += 'Denna åtgärd kan inte ångras.';
+
+  if (!confirm(msg)) return;
+
+  /* 1. Remove apps from localStorage */
+  var remaining = loadApps().filter(function (a) { return a.section !== section; });
+  saveApps(remaining);
+
+  /* 2. Remove the board column */
+  var col = document.getElementById('col-' + section);
+  if (col) col.remove();
+
+  /* 3. Remove the sidebar entry */
+  var sidebarEntry = document.querySelector('.sidebar-cat[data-filter="' + section + '"]');
+  if (sidebarEntry) sidebarEntry.remove();
+
+  /* 4. Remove from the "add app" select */
+  var sel = document.getElementById('new-section');
+  var opt = sel.querySelector('option[value="' + section + '"]');
+  if (opt) opt.remove();
+
+  /* 5. Clean up SECTION_LABELS */
+  delete SECTION_LABELS[section];
+
+  /* 6. If currently filtering this section, reset to "all" */
+  if (activeFilter === section) {
+    applyFilter('all', document.querySelector('[data-filter="all"]'));
+  }
+
+  /* 7. Rebuild the settings list */
+  closeSettings();
+  setTimeout(openSettings, 50);
+}
+
+/* ═══════════════════════════════════════════
+   EXPORT
+   ═══════════════════════════════════════════ */
+function exportData() {
+  var apps = loadApps();
+  if (!apps.length) { alert('Inga sparade appar att exportera.'); return; }
+  var blob = new Blob([JSON.stringify(apps, null, 2)], { type: 'application/json' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href   = url;
+  a.download = 'lararportalen_appar_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+}
+
+/* ═══════════════════════════════════════════
+   IMPORT
+   ═══════════════════════════════════════════ */
+function importData(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      var apps = JSON.parse(e.target.result);
+      if (!Array.isArray(apps)) throw new Error();
+      var existing    = loadApps();
+      var existingIds = existing.map(function (a) { return a.id; });
+      var fresh       = apps.filter(function (a) { return !existingIds.includes(a.id); });
+      fresh.forEach(function (app) { existing.push(app); appendCardToDOM(app, false, false); });
+      saveApps(existing);
+      updateAllCounts();
+      var activeEl = document.querySelector('.sidebar-cat.active');
+      applyFilter(activeFilter, activeEl);
+      alert('✓ ' + fresh.length + ' app(ar) importerades.');
+    } catch (_) {
+      alert('Kunde inte läsa filen. Kontrollera att det är en giltig JSON-export.');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+/* ═══════════════════════════════════════════
+   UTILITY
+   ═══════════════════════════════════════════ */
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+</script>
+</body>
+</html>
